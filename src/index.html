@@ -2,59 +2,48 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Drag Drop Project TS</title>
-    <link href="css/reset.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>TypeScript – Drag And Drop Project</title>
+    <link rel="stylesheet" href="./css/app.css" />
     <script src="../build/app.js" defer></script>
 </head>
 
 <body>
-    <div class="container">
-        <section class="section-form">
-            <form id="user-input">
-                <div class="row">
-                    <label for="title">Titlte</label>
-                    <input type="text" id="title" name="title" />
-                </div>
-                <div class="row">
-                    <label for="description">Description</label>
-                    <textarea id="description" name="description"> </textarea>
-                </div>
-                <div class="row">
-                    <label for="people">People</label>
-                    <input type="number" id="people" name="people" min="0" />
-                </div>
-                <input type="submit" value="Add Project" />
-            </form>
+    <template id="project-input">
+        <form id="user-input">
+            <div class="form-control">
+                <label for="title">Title</label>
+                <input type="text" id="title" />
+            </div>
+            <div class="form-control">
+                <label for="description">Description</label>
+                <textarea id="description" rows="3"></textarea>
+            </div>
+            <div class="form-control">
+                <label for="people">People</label>
+                <input type="number" id="people" step="1" min="0" max="10" />
+            </div>
+            <button type="submit">ADD PROJECT</button>
+        </form>
+    </template>
+    <template id="single-project">
+        <li draggable="true">
+            <h2></h2>
+            <h3></h3>
+            <p></p>
+        </li>
+    </template>
+    <template id="project-list">
+        <section class="projects">
+            <header>
+                <h2></h2>
+            </header>
+            <ul></ul>
         </section>
-
-        <section class="section-projects">
-            <div class="active-projects panel drop-zone">
-                <header class="header-panel">Active projects</header>
-                <div class="body-panel">
-                    <ul id="active-project-list">
-
-                    </ul>
-
-                </div>
-            </div>
-
-            <div class="finish-project panel drop-zone">
-                <header class="header-panel">Finished projects</header>
-                <div class="body-panel">
-                    <ul id="finish-project-list">
-
-                    </ul>
-
-                </div>
-            </div>
-    </div>
-
-    </section>
-
-    </div>
-
+    </template>
+    <div id="app"></div>
 </body>
 
 </html>
