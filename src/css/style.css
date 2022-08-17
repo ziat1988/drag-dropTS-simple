@@ -46,10 +46,12 @@ form .row {
     width: 400px;
 }
 
+textarea, input, button, select {
+    font-family: inherit;
+    font-size: inherit; }
 
 textarea:focus, input:focus{
     outline: none;
-
 }
 
 
