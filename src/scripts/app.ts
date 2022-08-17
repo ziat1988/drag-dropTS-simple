@@ -13,11 +13,9 @@ document.getElementById("user-input").addEventListener("submit", function (event
   newProject.renderListActive();
 });
 
-let draggingLi = undefined;
 // drag event
 document.addEventListener("dragstart", function (event) {
   const element = event.target as Element;
-  draggingLi = element;
   if (!element || !element.classList.contains("item-project")) {
     return;
   }
@@ -49,39 +47,36 @@ function dragOver(event) {
 
 function handleDrop(event) {
   const id = event.dataTransfer.getData("text/plain");
-  let element = event.target as HTMLElement; // ul
+  let element = event.target as HTMLElement;
   const draggItem = document.getElementById(id)! as HTMLElement;
 
-  if (element.tagName === "UL") {
-    element.insertAdjacentElement("beforeend", draggItem);
+  const currentZone = event.currentTarget;
+
+  const zoneDropList = currentZone.querySelector("UL") as HTMLUListElement;
+
+  const zoneDragList = draggItem.parentNode as HTMLUListElement;
+
+  if (zoneDropList !== zoneDragList) {
+    zoneDropList.prepend(draggItem);
     return;
   }
+
+  // traitement inside same zone
 
   if (element.tagName !== "LI") {
     element = element.closest("LI"); // only work with LI
   }
 
-  // get the ul of that element
-  const listItem = element.parentNode as HTMLElement;
-  console.log("list item:", listItem);
-  console.log("element:", element);
-  const arrItem = Array.from(listItem.children);
+  const arrItem = Array.from(zoneDropList.children);
   const indexElement = arrItem.indexOf(element);
   const indexDragItem = arrItem.indexOf(draggItem);
 
-  // if indexDragItem = -1 : swap list
-
-  if (indexDragItem < 0) {
-    listItem.insertBefore(draggItem, listItem.firstChild); // insert in first place
-    return;
-  }
-
   if (indexDragItem < indexElement) {
     // insert after
-    listItem.insertBefore(draggItem, element.nextSibling);
+    zoneDropList.insertBefore(draggItem, element.nextSibling);
   } else {
     //insert before
-    listItem.insertBefore(draggItem, element);
+    zoneDropList.insertBefore(draggItem, element);
   }
 }
 

@@ -136,7 +136,7 @@ form input[type="submit"]{
 }
 
 .finish-project ul {
-    min-height: 200px;
+    /*min-height: 200px;*/
 }
 
 .hide{
