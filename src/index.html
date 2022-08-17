@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Drag Drop Project TS</title>
+    <link href="css/reset.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <script src="../build/app.js" defer></script>
+</head>
+
+<body>
+    <div class="container">
+        <section class="section-form">
+            <form id="user-input">
+                <div class="row">
+                    <label for="title">Titlte</label>
+                    <input type="text" id="title" name="title" />
+                </div>
+                <div class="row">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description"> </textarea>
+                </div>
+                <div class="row">
+                    <label for="people">People</label>
+                    <input type="number" id="people" name="people" min="0" />
+                </div>
+                <input type="submit" value="Add Project" />
+            </form>
+        </section>
+
+        <section class="section-projects">
+            <div class="active-projects">
+                <header class="header-panel">Active projects</header>
+                <div class="body-panel">
+                    <ul id="active-project-list" class="drop-zone">
+
+                    </ul>
+
+                </div>
+            </div>
+
+            <div class="finish-project">
+                <header class="header-panel">Finished projects</header>
+                <div class="body-panel">
+                    <ul id="finish-project-list" class="drop-zone">
+
+                    </ul>
+
+                </div>
+            </div>
+    </div>
+
+    </section>
+
+    </div>
+
+</body>
+
+</html>
