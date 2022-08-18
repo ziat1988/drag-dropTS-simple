@@ -14,8 +14,8 @@ function autobind(_: any, _2: string, descriptor: PropertyDescriptor) {
 class ProjectInput {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLDivElement;
-
   element: HTMLFormElement;
+
   titleInputElement: HTMLInputElement;
   descriptionInputElement: HTMLInputElement;
   peopleInputElement: HTMLInputElement;
@@ -39,7 +39,7 @@ class ProjectInput {
   private submitHandler(event: Event) {
     event.preventDefault();
 
-    console.log(this.titleInputElement.value);
+    this.clearInputs();
   }
 
   //set up event listener to form
@@ -49,6 +49,12 @@ class ProjectInput {
 
   private attach() {
     this.hostElement.insertAdjacentElement("afterbegin", this.element);
+  }
+
+  private clearInputs(): void {
+    this.titleInputElement.value = "";
+    this.descriptionInputElement.value = "";
+    this.peopleInputElement.value = "";
   }
 }
 
