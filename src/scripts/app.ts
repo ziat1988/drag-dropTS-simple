@@ -43,11 +43,10 @@ class ProjectInput {
     const validator = new ValidateExecutor();
     const resultValidation = validator.validate(newProject);
 
-    console.log(resultValidation);
-    if (!validator.isValidateGetter) {
+    console.log("result:", resultValidation);
+    if (!validator.isValidateGetter && resultValidation) {
       // show error & focus
       this.showErrorInput(resultValidation);
-
       return;
     }
 
@@ -62,19 +61,28 @@ class ProjectInput {
       nodeList[i].remove();
     }
   }
-  private showErrorInput(obj: IResultValitation) {
-    for (const [key] of Object.entries(obj)) {
+
+  private showErrorInput(resultsMap: Map<string, tupleMsgValidation>) {
+    let inputFocus: HTMLInputElement | undefined = undefined;
+    for (const [key, val] of resultsMap) {
       const mappingInput = {
         title: this.titleInputElement,
         description: this.descriptionInputElement,
         people: this.peopleInputElement,
       };
 
-      if (obj[key][0] === false) {
-        const templateErr = `<div class="error">${obj[key][1]}</div>`;
-        (<any>mappingInput)[key].focus();
+      if (val[0] === false) {
+        const templateErr = `<div class="error">${val[1]}</div>`;
+        if (!inputFocus) {
+          inputFocus = (<any>mappingInput)[key];
+        }
+
         (<any>mappingInput)[key].insertAdjacentHTML("afterend", templateErr); //
       }
+    }
+
+    if (inputFocus) {
+      inputFocus.focus();
     }
   }
 
@@ -113,10 +121,6 @@ interface IProject {
 */
 
 type tupleMsgValidation = [boolean, string];
-type IResultValitation = {
-  // {title:[true,"something"]}
-  [nameProp: string]: tupleMsgValidation;
-};
 
 type IRegistorValidator = {
   [nameClass: string]: { [props: string]: Validator };
@@ -154,7 +158,6 @@ function MinLength(sizeMin: number) {
   };
 }
 
-//TODO: get after decorator implement
 //const registeredValidators: IRegistorValidator = { Project: { title: { required: true }, description: { required: true, minNumber: 5 } } };
 const registeredValidators: IRegistorValidator = {}; //init empty object
 
@@ -162,13 +165,13 @@ class Project {
   @Required()
   title: string;
 
-  @Min(2)
-  @Required()
-  people: number;
-
   @MinLength(5)
   @Required()
   description: string;
+
+  @Min(2)
+  @Required()
+  people: number;
 
   constructor(title: string, description: string, people: number) {
     this.title = title;
@@ -190,14 +193,17 @@ class ValidateExecutor {
     return this._isValidate;
   }
 
-  validate(obj: any): IResultValitation {
+  validate(obj: any): Map<string, tupleMsgValidation> | void {
     const objValidatorConfig = registeredValidators[obj.constructor.name];
 
-    // check if (Object.keys({}).length === 0) {
-    //console.log('I will not print');
-    // }
+    // check object empty
+    if (!objValidatorConfig) {
+      this.isValidateSetter = true;
+      return;
+    }
 
-    const resultValidation: IResultValitation = {}; // {title:[false,"somethingwrong"]}
+    const resultValidation: Map<string, tupleMsgValidation> = new Map<string, tupleMsgValidation>();
+
     for (const prop in objValidatorConfig) {
       const allConditionValidation: Validator = objValidatorConfig[prop]; // {required: true, minNumber: 5 }
 
@@ -208,10 +214,10 @@ class ValidateExecutor {
         console.log("thu tu goi function:", prop);
         if (res[0] === false) {
           this.isValidateSetter = false;
-          resultValidation[prop] = res;
+          resultValidation.set(prop, res);
           break; // exit loop inner to get only first false condition
         }
-        resultValidation[prop] = [true, ""]; //will be override but its ok
+        resultValidation.set(prop, [true, ""]); //will be override but its ok
       }
     }
 

@@ -33,8 +33,8 @@ class ProjectInput {
         const newProject = new Project(this.titleInputElement.value, this.descriptionInputElement.value, +this.peopleInputElement.value);
         const validator = new ValidateExecutor();
         const resultValidation = validator.validate(newProject);
-        console.log(resultValidation);
-        if (!validator.isValidateGetter) {
+        console.log("result:", resultValidation);
+        if (!validator.isValidateGetter && resultValidation) {
             this.showErrorInput(resultValidation);
             return;
         }
@@ -47,18 +47,24 @@ class ProjectInput {
             nodeList[i].remove();
         }
     }
-    showErrorInput(obj) {
-        for (const [key] of Object.entries(obj)) {
+    showErrorInput(resultsMap) {
+        let inputFocus = undefined;
+        for (const [key, val] of resultsMap) {
             const mappingInput = {
                 title: this.titleInputElement,
                 description: this.descriptionInputElement,
                 people: this.peopleInputElement,
             };
-            if (obj[key][0] === false) {
-                const templateErr = `<div class="error">${obj[key][1]}</div>`;
-                mappingInput[key].focus();
+            if (val[0] === false) {
+                const templateErr = `<div class="error">${val[1]}</div>`;
+                if (!inputFocus) {
+                    inputFocus = mappingInput[key];
+                }
                 mappingInput[key].insertAdjacentHTML("afterend", templateErr);
             }
+        }
+        if (inputFocus) {
+            inputFocus.focus();
         }
     }
     configure() {
@@ -108,13 +114,13 @@ __decorate([
     Required()
 ], Project.prototype, "title", void 0);
 __decorate([
-    Min(2),
-    Required()
-], Project.prototype, "people", void 0);
-__decorate([
     MinLength(5),
     Required()
 ], Project.prototype, "description", void 0);
+__decorate([
+    Min(2),
+    Required()
+], Project.prototype, "people", void 0);
 class ValidateExecutor {
     constructor() {
         this._isValidate = true;
@@ -127,7 +133,11 @@ class ValidateExecutor {
     }
     validate(obj) {
         const objValidatorConfig = registeredValidators[obj.constructor.name];
-        const resultValidation = {};
+        if (!objValidatorConfig) {
+            this.isValidateSetter = true;
+            return;
+        }
+        const resultValidation = new Map();
         for (const prop in objValidatorConfig) {
             const allConditionValidation = objValidatorConfig[prop];
             for (const [key, value] of Object.entries(allConditionValidation)) {
@@ -135,10 +145,10 @@ class ValidateExecutor {
                 console.log("thu tu goi function:", prop);
                 if (res[0] === false) {
                     this.isValidateSetter = false;
-                    resultValidation[prop] = res;
+                    resultValidation.set(prop, res);
                     break;
                 }
-                resultValidation[prop] = [true, ""];
+                resultValidation.set(prop, [true, ""]);
             }
         }
         console.log("bool:", this.isValidateGetter);
