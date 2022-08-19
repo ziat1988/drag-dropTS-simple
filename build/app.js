@@ -29,7 +29,37 @@ class ProjectInput {
     }
     submitHandler(event) {
         event.preventDefault();
+        this.cleanError();
+        const newProject = new Project(this.titleInputElement.value, this.descriptionInputElement.value, +this.peopleInputElement.value);
+        const validator = new ValidateExecutor();
+        const resultValidation = validator.validate(newProject);
+        console.log(resultValidation);
+        if (!validator.isValidateGetter) {
+            this.showErrorInput(resultValidation);
+            return;
+        }
         this.clearInputs();
+        console.log("submit ok");
+    }
+    cleanError() {
+        const nodeList = this.element.querySelectorAll(".error");
+        for (let i = 0; i < nodeList.length; i++) {
+            nodeList[i].remove();
+        }
+    }
+    showErrorInput(obj) {
+        for (const [key] of Object.entries(obj)) {
+            const mappingInput = {
+                title: this.titleInputElement,
+                description: this.descriptionInputElement,
+                people: this.peopleInputElement,
+            };
+            if (obj[key][0] === false) {
+                const templateErr = `<div class="error">${obj[key][1]}</div>`;
+                mappingInput[key].focus();
+                mappingInput[key].insertAdjacentHTML("afterend", templateErr);
+            }
+        }
     }
     configure() {
         this.element.addEventListener("submit", this.submitHandler);
@@ -46,5 +76,84 @@ class ProjectInput {
 __decorate([
     autobind
 ], ProjectInput.prototype, "submitHandler", null);
-new ProjectInput();
+const projectInput = new ProjectInput();
+function Required() {
+    return function (target, propName) {
+        var _a;
+        registeredValidators[target.constructor.name] = Object.assign(Object.assign({}, registeredValidators[target.constructor.name]), { [propName]: Object.assign(Object.assign({}, (registeredValidators[target.constructor.name] ? (_a = registeredValidators[target.constructor.name][propName]) !== null && _a !== void 0 ? _a : {} : {})), { required: true }) });
+        console.log(registeredValidators);
+    };
+}
+function Min(min) {
+    return function (target, propName) {
+        var _a;
+        registeredValidators[target.constructor.name] = Object.assign(Object.assign({}, registeredValidators[target.constructor.name]), { [propName]: Object.assign(Object.assign({}, (registeredValidators[target.constructor.name] ? (_a = registeredValidators[target.constructor.name][propName]) !== null && _a !== void 0 ? _a : {} : {})), { min: min }) });
+    };
+}
+function MinLength(sizeMin) {
+    return function (target, propName) {
+        var _a;
+        registeredValidators[target.constructor.name] = Object.assign(Object.assign({}, registeredValidators[target.constructor.name]), { [propName]: Object.assign(Object.assign({}, (registeredValidators[target.constructor.name] ? (_a = registeredValidators[target.constructor.name][propName]) !== null && _a !== void 0 ? _a : {} : {})), { minLength: sizeMin }) });
+    };
+}
+const registeredValidators = {};
+class Project {
+    constructor(title, description, people) {
+        this.title = title;
+        this.people = people;
+        this.description = description;
+    }
+}
+__decorate([
+    Required()
+], Project.prototype, "title", void 0);
+__decorate([
+    Min(2),
+    Required()
+], Project.prototype, "people", void 0);
+__decorate([
+    MinLength(5),
+    Required()
+], Project.prototype, "description", void 0);
+class ValidateExecutor {
+    constructor() {
+        this._isValidate = true;
+    }
+    set isValidateSetter(value) {
+        this._isValidate = value;
+    }
+    get isValidateGetter() {
+        return this._isValidate;
+    }
+    validate(obj) {
+        const objValidatorConfig = registeredValidators[obj.constructor.name];
+        const resultValidation = {};
+        for (const prop in objValidatorConfig) {
+            const allConditionValidation = objValidatorConfig[prop];
+            for (const [key, value] of Object.entries(allConditionValidation)) {
+                const res = this[`${key}`](obj[prop], value);
+                console.log("thu tu goi function:", prop);
+                if (res[0] === false) {
+                    this.isValidateSetter = false;
+                    resultValidation[prop] = res;
+                    break;
+                }
+                resultValidation[prop] = [true, ""];
+            }
+        }
+        console.log("bool:", this.isValidateGetter);
+        return resultValidation;
+    }
+    required(input, val, msg) {
+        if (val === false)
+            return [true, ""];
+        return [!(input.toString().trim().length === 0), msg !== null && msg !== void 0 ? msg : "This field is required"];
+    }
+    min(input, min, msg) {
+        return [input > min, msg !== null && msg !== void 0 ? msg : "Number must be more than " + min + "."];
+    }
+    minLength(input, min, msg) {
+        return [input.toString().trim().length > min, msg !== null && msg !== void 0 ? msg : "text must have more than " + min + " characters"];
+    }
+}
 //# sourceMappingURL=app.js.map
