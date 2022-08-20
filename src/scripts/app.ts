@@ -23,7 +23,7 @@ class ProjectInput {
     this.templateElement = document.getElementById("project-input")! as HTMLTemplateElement;
     this.hostElement = document.getElementById("app")! as HTMLDivElement;
 
-    const importedNode = document.importNode(this.templateElement.content, true);
+    const importedNode = document.importNode(this.templateElement.content, true); // deep: child node also get
     this.element = importedNode.firstElementChild as HTMLFormElement;
 
     this.titleInputElement = this.element.querySelector("#title") as HTMLInputElement;
@@ -239,3 +239,34 @@ class ValidateExecutor {
     return [input.toString().trim().length > min, msg ?? "text must have more than " + min + " characters"];
   }
 }
+
+// render list wrapper init
+class ProjectList {
+  templateElement: HTMLTemplateElement;
+  hostElement: HTMLDivElement;
+  element: HTMLElement;
+
+  constructor(private type: "active" | "finished") {
+    this.templateElement = document.getElementById("project-list")! as HTMLTemplateElement;
+    this.hostElement = document.getElementById("app")! as HTMLDivElement;
+
+    const importedNode = document.importNode(this.templateElement.content, true);
+    this.element = importedNode.firstElementChild as HTMLElement;
+    this.element.id = `${this.type}-projects`;
+    this.renderContent();
+    this.attach();
+  }
+
+  private renderContent() {
+    const listId = `${this.type}-projects-list`;
+    this.element.querySelector("ul")!.id = listId; // we add an id to the `ul` element (based on the list type, active or finished)
+    this.element.querySelector("h2")!.textContent = this.type.toUpperCase() + " PROJECTS"; // we fill the h2 title (based on the list type, active or finished)
+  }
+
+  private attach() {
+    this.hostElement.insertAdjacentElement("beforeend", this.element);
+  }
+}
+
+new ProjectList("active");
+new ProjectList("finished");
