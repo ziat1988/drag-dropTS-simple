@@ -1,3 +1,4 @@
+// TODO: check  if many listener cause problem when publish?
 class Subscriber<T> {
   private subscribers: Set<(data: T) => void> = new Set(); // list of function unique
 
@@ -335,6 +336,7 @@ class ProjectItem {
     this.element = importedNode.firstElementChild as HTMLElement;
     this.renderContent();
     this.attach();
+    this.configure();
   }
 
   private renderContent() {
@@ -345,6 +347,16 @@ class ProjectItem {
 
   private attach() {
     this.hostElement.insertAdjacentElement("beforeend", this.element);
+  }
+
+  //set up event listener
+  private configure() {
+    this.element.addEventListener("dragstart", this.dragStart);
+  }
+
+  @autobind
+  private dragStart(event: DragEvent) {
+    event.dataTransfer?.setData("text/plain", this.projectItem.id.toString());
   }
 }
 
@@ -364,12 +376,14 @@ class ProjectList {
     this.renderContent();
     this.attach();
     this.renderProjects(); // suppose persist database
-    // subscribe to state
-    projectState.subscrible(this.renderProjects);
+    this.configure();
+    projectState.subscrible(this.renderProjects); // subscribe to state
+    console.log(projectState);
   }
 
   @autobind
   private renderProjects() {
+    console.log("go here:", this.type);
     const listEl = document.getElementById(`${this.type}-projects-list`)! as HTMLUListElement;
     listEl.innerHTML = "";
 
@@ -380,8 +394,6 @@ class ProjectList {
 
       return project.status === ProjectStatus.Finished;
     });
-
-    console.log("apres filter:", projectState.projects);
 
     for (const prjItem of projectsAssign) {
       new ProjectItem(prjItem, `${this.type}-projects-list`);
@@ -396,6 +408,41 @@ class ProjectList {
 
   private attach() {
     this.hostElement.insertAdjacentElement("beforeend", this.element);
+  }
+
+  private configure() {
+    // listener on drop
+    this.element.addEventListener("dragenter", this.dragEnter);
+    this.element.addEventListener("dragover", this.dragOver);
+    this.element.addEventListener("drop", this.handleDrop);
+  }
+  private dragEnter(event: DragEvent) {
+    // console.log(event);
+    event.preventDefault();
+  }
+
+  private dragOver(event: DragEvent) {
+    event.preventDefault();
+  }
+
+  @autobind
+  private handleDrop(event: DragEvent) {
+    event.preventDefault();
+
+    console.log(event.dataTransfer!.effectAllowed);
+    const idLi = event.dataTransfer!.getData("text/plain");
+
+    // search item with id
+    const project = projectState.projects.find((p) => p.id === +idLi);
+    const newStatus = this.type === "active" ? ProjectStatus.Active : ProjectStatus.Finished;
+
+    if (project && project.status !== newStatus) {
+      project.status = newStatus;
+
+      projectState.publish(project);
+
+      console.log("here render after drop");
+    }
   }
 }
 

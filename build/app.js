@@ -244,6 +244,7 @@ class ProjectItem {
         this.element = importedNode.firstElementChild;
         this.renderContent();
         this.attach();
+        this.configure();
     }
     renderContent() {
         this.element.querySelector("h2").textContent = this.projectItem.title;
@@ -253,7 +254,17 @@ class ProjectItem {
     attach() {
         this.hostElement.insertAdjacentElement("beforeend", this.element);
     }
+    configure() {
+        this.element.addEventListener("dragstart", this.dragStart);
+    }
+    dragStart(event) {
+        var _a;
+        (_a = event.dataTransfer) === null || _a === void 0 ? void 0 : _a.setData("text/plain", this.projectItem.id.toString());
+    }
 }
+__decorate([
+    autobind
+], ProjectItem.prototype, "dragStart", null);
 class ProjectList {
     constructor(type) {
         this.type = type;
@@ -265,9 +276,12 @@ class ProjectList {
         this.renderContent();
         this.attach();
         this.renderProjects();
+        this.configure();
         projectState.subscrible(this.renderProjects);
+        console.log(projectState);
     }
     renderProjects() {
+        console.log("go here:", this.type);
         const listEl = document.getElementById(`${this.type}-projects-list`);
         listEl.innerHTML = "";
         const projectsAssign = projectState.projects.filter((project) => {
@@ -276,7 +290,6 @@ class ProjectList {
             }
             return project.status === ProjectStatus.Finished;
         });
-        console.log("apres filter:", projectState.projects);
         for (const prjItem of projectsAssign) {
             new ProjectItem(prjItem, `${this.type}-projects-list`);
         }
@@ -289,10 +302,36 @@ class ProjectList {
     attach() {
         this.hostElement.insertAdjacentElement("beforeend", this.element);
     }
+    configure() {
+        this.element.addEventListener("dragenter", this.dragEnter);
+        this.element.addEventListener("dragover", this.dragOver);
+        this.element.addEventListener("drop", this.handleDrop);
+    }
+    dragEnter(event) {
+        event.preventDefault();
+    }
+    dragOver(event) {
+        event.preventDefault();
+    }
+    handleDrop(event) {
+        event.preventDefault();
+        console.log(event.dataTransfer.effectAllowed);
+        const idLi = event.dataTransfer.getData("text/plain");
+        const project = projectState.projects.find((p) => p.id === +idLi);
+        const newStatus = this.type === "active" ? ProjectStatus.Active : ProjectStatus.Finished;
+        if (project && project.status !== newStatus) {
+            project.status = newStatus;
+            projectState.publish(project);
+            console.log("here render after drop");
+        }
+    }
 }
 __decorate([
     autobind
 ], ProjectList.prototype, "renderProjects", null);
+__decorate([
+    autobind
+], ProjectList.prototype, "handleDrop", null);
 new ProjectList("active");
 new ProjectList("finished");
 //# sourceMappingURL=app.js.map
