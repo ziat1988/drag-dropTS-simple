@@ -1,3 +1,72 @@
+class Subscriber<T> {
+  private subscribers: Set<(data: T) => void> = new Set(); // list of function unique
+
+  constructor() {}
+
+  subscrible(cb: (data: T) => void): void {
+    this.subscribers.add(cb);
+  }
+
+  publish(data: T): void {
+    this.subscribers.forEach(function (f) {
+      console.log("data in publish:", data);
+      f(data);
+    });
+  }
+
+  getList() {
+    return this.subscribers;
+  }
+}
+
+enum ProjectStatus {
+  Active,
+  Finished,
+}
+class ProjectState extends Subscriber<Project> {
+  private static _instance: ProjectState;
+  listProject: Project[] = [
+    {
+      id: 1,
+      title: "haa",
+      description: "fdpofpdo",
+      status: ProjectStatus.Active,
+      people: 5,
+    },
+    {
+      id: 2,
+      title: "pop",
+      description: "fdpofpdo",
+      status: ProjectStatus.Finished,
+      people: 5,
+    },
+  ];
+  private constructor() {
+    super();
+  }
+
+  static getInstance() {
+    if (this._instance) {
+      return this._instance;
+    }
+    // initiate if not
+    this._instance = new ProjectState();
+    return this._instance;
+  }
+
+  get projects() {
+    return this.listProject;
+  }
+
+  addProject(project: Project): void {
+    console.log("project:", project);
+    this.listProject.push(project);
+    this.publish(project);
+    // loop listener
+  }
+}
+const projectState = ProjectState.getInstance();
+
 function autobind(_: any, _2: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value;
   const adjDescriptor: PropertyDescriptor = {
@@ -35,24 +104,32 @@ class ProjectInput {
   }
 
   @autobind
-  private submitHandler(event: Event) {
+  private submitHandler(event: Event): void {
     event.preventDefault();
     this.cleanError();
-    const newProject = new Project(this.titleInputElement.value, this.descriptionInputElement.value, +this.peopleInputElement.value);
+    const newProject: Project = new Project(this.titleInputElement.value, this.descriptionInputElement.value, +this.peopleInputElement.value);
+    const isValidate = this.validateInput(newProject);
 
-    const validator = new ValidateExecutor();
-    const resultValidation = validator.validate(newProject);
-
-    console.log("result:", resultValidation);
-    if (!validator.isValidateGetter && resultValidation) {
-      // show error & focus
-      this.showErrorInput(resultValidation);
+    if (!isValidate) {
       return;
     }
-
+    // TODO: set state
+    projectState.addProject(newProject);
     this.clearInputs();
 
     console.log("submit ok");
+  }
+
+  private validateInput(newProject: Project): boolean {
+    const validator = new ValidateExecutor();
+    const resultValidation = validator.validate(newProject);
+
+    if (!validator.isValidateGetter && resultValidation) {
+      // show error & focus
+      this.showErrorInput(resultValidation);
+      return false;
+    }
+    return true;
   }
 
   private cleanError() {
@@ -173,10 +250,16 @@ class Project {
   @Required()
   people: number;
 
+  id: number;
+  status: ProjectStatus;
+
   constructor(title: string, description: string, people: number) {
     this.title = title;
     this.people = people;
     this.description = description;
+
+    this.id = Math.random();
+    this.status = ProjectStatus.Active;
   }
 }
 
@@ -240,6 +323,31 @@ class ValidateExecutor {
   }
 }
 
+class ProjectItem {
+  templateElement: HTMLTemplateElement;
+  hostElement: HTMLDivElement;
+  element: HTMLElement;
+
+  constructor(public projectItem: Project, public idUl: string) {
+    this.templateElement = document.getElementById("single-project")! as HTMLTemplateElement;
+    this.hostElement = document.getElementById(idUl)! as HTMLDivElement;
+    const importedNode = document.importNode(this.templateElement.content, true);
+    this.element = importedNode.firstElementChild as HTMLElement;
+    this.renderContent();
+    this.attach();
+  }
+
+  private renderContent() {
+    this.element.querySelector("h2")!.textContent = this.projectItem.title;
+    this.element.querySelector("h3")!.textContent = this.projectItem.people.toString();
+    this.element.querySelector("p")!.textContent = this.projectItem.description;
+  }
+
+  private attach() {
+    this.hostElement.insertAdjacentElement("beforeend", this.element);
+  }
+}
+
 // render list wrapper init
 class ProjectList {
   templateElement: HTMLTemplateElement;
@@ -255,6 +363,29 @@ class ProjectList {
     this.element.id = `${this.type}-projects`;
     this.renderContent();
     this.attach();
+    this.renderProjects(); // suppose persist database
+    // subscribe to state
+    projectState.subscrible(this.renderProjects);
+  }
+
+  @autobind
+  private renderProjects() {
+    const listEl = document.getElementById(`${this.type}-projects-list`)! as HTMLUListElement;
+    listEl.innerHTML = "";
+
+    const projectsAssign = projectState.projects.filter((project) => {
+      if (this.type === "active") {
+        return project.status === ProjectStatus.Active;
+      }
+
+      return project.status === ProjectStatus.Finished;
+    });
+
+    console.log("apres filter:", projectState.projects);
+
+    for (const prjItem of projectsAssign) {
+      new ProjectItem(prjItem, `${this.type}-projects-list`);
+    }
   }
 
   private renderContent() {

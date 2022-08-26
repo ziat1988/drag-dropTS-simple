@@ -5,6 +5,65 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+class Subscriber {
+    constructor() {
+        this.subscribers = new Set();
+    }
+    subscrible(cb) {
+        this.subscribers.add(cb);
+    }
+    publish(data) {
+        this.subscribers.forEach(function (f) {
+            console.log("data in publish:", data);
+            f(data);
+        });
+    }
+    getList() {
+        return this.subscribers;
+    }
+}
+var ProjectStatus;
+(function (ProjectStatus) {
+    ProjectStatus[ProjectStatus["Active"] = 0] = "Active";
+    ProjectStatus[ProjectStatus["Finished"] = 1] = "Finished";
+})(ProjectStatus || (ProjectStatus = {}));
+class ProjectState extends Subscriber {
+    constructor() {
+        super();
+        this.listProject = [
+            {
+                id: 1,
+                title: "haa",
+                description: "fdpofpdo",
+                status: ProjectStatus.Active,
+                people: 5,
+            },
+            {
+                id: 2,
+                title: "pop",
+                description: "fdpofpdo",
+                status: ProjectStatus.Finished,
+                people: 5,
+            },
+        ];
+    }
+    static getInstance() {
+        if (this._instance) {
+            return this._instance;
+        }
+        this._instance = new ProjectState();
+        return this._instance;
+    }
+    get projects() {
+        return this.listProject;
+    }
+    addProject(project) {
+        console.log("project:", project);
+        this.listProject.push(project);
+        this.publish(project);
+    }
+}
+const projectState = ProjectState.getInstance();
 function autobind(_, _2, descriptor) {
     const originalMethod = descriptor.value;
     const adjDescriptor = {
@@ -31,15 +90,22 @@ class ProjectInput {
         event.preventDefault();
         this.cleanError();
         const newProject = new Project(this.titleInputElement.value, this.descriptionInputElement.value, +this.peopleInputElement.value);
-        const validator = new ValidateExecutor();
-        const resultValidation = validator.validate(newProject);
-        console.log("result:", resultValidation);
-        if (!validator.isValidateGetter && resultValidation) {
-            this.showErrorInput(resultValidation);
+        const isValidate = this.validateInput(newProject);
+        if (!isValidate) {
             return;
         }
+        projectState.addProject(newProject);
         this.clearInputs();
         console.log("submit ok");
+    }
+    validateInput(newProject) {
+        const validator = new ValidateExecutor();
+        const resultValidation = validator.validate(newProject);
+        if (!validator.isValidateGetter && resultValidation) {
+            this.showErrorInput(resultValidation);
+            return false;
+        }
+        return true;
     }
     cleanError() {
         const nodeList = this.element.querySelectorAll(".error");
@@ -108,6 +174,8 @@ class Project {
         this.title = title;
         this.people = people;
         this.description = description;
+        this.id = Math.random();
+        this.status = ProjectStatus.Active;
     }
 }
 __decorate([
@@ -166,6 +234,26 @@ class ValidateExecutor {
         return [input.toString().trim().length > min, msg !== null && msg !== void 0 ? msg : "text must have more than " + min + " characters"];
     }
 }
+class ProjectItem {
+    constructor(projectItem, idUl) {
+        this.projectItem = projectItem;
+        this.idUl = idUl;
+        this.templateElement = document.getElementById("single-project");
+        this.hostElement = document.getElementById(idUl);
+        const importedNode = document.importNode(this.templateElement.content, true);
+        this.element = importedNode.firstElementChild;
+        this.renderContent();
+        this.attach();
+    }
+    renderContent() {
+        this.element.querySelector("h2").textContent = this.projectItem.title;
+        this.element.querySelector("h3").textContent = this.projectItem.people.toString();
+        this.element.querySelector("p").textContent = this.projectItem.description;
+    }
+    attach() {
+        this.hostElement.insertAdjacentElement("beforeend", this.element);
+    }
+}
 class ProjectList {
     constructor(type) {
         this.type = type;
@@ -176,6 +264,22 @@ class ProjectList {
         this.element.id = `${this.type}-projects`;
         this.renderContent();
         this.attach();
+        this.renderProjects();
+        projectState.subscrible(this.renderProjects);
+    }
+    renderProjects() {
+        const listEl = document.getElementById(`${this.type}-projects-list`);
+        listEl.innerHTML = "";
+        const projectsAssign = projectState.projects.filter((project) => {
+            if (this.type === "active") {
+                return project.status === ProjectStatus.Active;
+            }
+            return project.status === ProjectStatus.Finished;
+        });
+        console.log("apres filter:", projectState.projects);
+        for (const prjItem of projectsAssign) {
+            new ProjectItem(prjItem, `${this.type}-projects-list`);
+        }
     }
     renderContent() {
         const listId = `${this.type}-projects-list`;
@@ -186,6 +290,9 @@ class ProjectList {
         this.hostElement.insertAdjacentElement("beforeend", this.element);
     }
 }
+__decorate([
+    autobind
+], ProjectList.prototype, "renderProjects", null);
 new ProjectList("active");
 new ProjectList("finished");
 //# sourceMappingURL=app.js.map
